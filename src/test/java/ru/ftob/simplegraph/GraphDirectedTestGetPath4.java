@@ -8,13 +8,13 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 
-public class GraphTestGetPathPow4 {
+public class GraphDirectedTestGetPath4 {
 
   private Graph<String> graph;
 
   @Before
   public void beforeClass() {
-    graph = new Graph<>();
+    graph = new Graph<>(true);
     graph.addVertex("A");
     graph.addVertex("B");
     graph.addVertex("C");
@@ -22,6 +22,7 @@ public class GraphTestGetPathPow4 {
     graph.addEdge("A", "B");
     graph.addEdge("B", "C");
     graph.addEdge("A", "D");
+    graph.addEdge("A", "A");
   }
 
   @Test
@@ -43,7 +44,7 @@ public class GraphTestGetPathPow4 {
   @Test
   public void testGetPath() {
     assertEquals(
-        Arrays.asList(new Edge<>("C", "B"), new Edge<>("B", "A"), new Edge<>("A", "D")),
+        Collections.emptyList(),
         graph.getPath("C", "D")
     );
   }
