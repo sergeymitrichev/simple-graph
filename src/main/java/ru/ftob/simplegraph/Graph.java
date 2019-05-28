@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Graph<T> {
 
-  private Boolean directed;
+  private final boolean directed;
 
   private Map<Vertex<T>, List<Vertex<T>>> vertices = new HashMap<>();
 
@@ -14,7 +14,7 @@ public class Graph<T> {
     this(false);
   }
 
-  public Graph(Boolean directed) {
+  public Graph(boolean directed) {
     this.directed = directed;
   }
 
@@ -27,39 +27,33 @@ public class Graph<T> {
   }
 
   /**
-   * Adds edge to graph by vertices types. Direction of arc (directed graph): from --&gt; to
+   * Adds edge to graph by vertices.
+   * Direction of arc (directed graph): from --&gt; to
    *
    * @param from vertex type value of edge
-   * @param to vertex type value of edge
+   * @param to   vertex type value of edge
    * @throws IllegalArgumentException if edge vertices are not
-   * part of graph
+   *                                  part of graph
    */
-  public void addEdge(T from, T to) {
-    Vertex<T> v1 = new Vertex<>(from);
-    Vertex<T> v2 = new Vertex<>(to);
-    try {
-      vertices.get(v1).add(v2);
-      if (!directed) {
-        vertices.get(v2).add(v1);
-      }
-    } catch (NullPointerException e) {
-      throw new IllegalArgumentException(
-          String.format("Edge vertices (%s, %s) must be part of the graph", from, to)
-      );
+  public void addEdge(Vertex<T> from, Vertex<T> to) {
+    validateVertices(from, to);
+    vertices.get(from).add(to);
+    if (!directed) {
+      vertices.get(to).add(from);
     }
-
   }
 
   /**
-   * Adds edge to graph by vertices. Direction of arc (directed graph): from --&gt; to
+   * Adds edge to graph by vertices types.
+   * Direction of arc (directed graph): from --&gt; to
    *
    * @param from vertex type value of edge
-   * @param to vertex type value of edge
+   * @param to   vertex type value of edge
    * @throws IllegalArgumentException if edge vertices are not
-   * part of graph
+   *                                  part of graph
    */
-  public void addEdge(Vertex<T> from, Vertex<T> to) {
-    addEdge(from.getType(), to.getType());
+  public void addEdge(T from, T to) {
+    addEdge(new Vertex<>(from), new Vertex<>(to));
   }
 
   /**
@@ -67,41 +61,43 @@ public class Graph<T> {
    *
    * @param edge edge to add
    * @throws IllegalArgumentException if edge vertices are not
-   * part of graph
+   *                                  part of graph
    */
   public void addEdge(Edge<T> edge) {
     addEdge(edge.getFrom(), edge.getTo());
   }
 
   /**
-   * Returns list of edges of the found path. If the path from the start
-   * point to the end point is not found, an empty sheet is returned.
+   * Returns list of edges of the found path. If path is not found,
+   * an empty list is returned. If the start and end of the path are the same,
+   * the vertex loop will be returned (if it exists)
+   * <p>
    * Path is not optimal.
    *
    * @param from starting point of the path
-   * @param to the endpoint of the path
+   * @param to   the endpoint of the path
    * @return list of edges of the found path
    * @throws IllegalArgumentException if the start or end points are not
-   * part of the graph
+   *                                  part of the graph
    */
   public List<Edge<T>> getPath(T from, T to) {
+
     Vertex<T> v1 = new Vertex<>(from);
     Vertex<T> v2 = new Vertex<>(to);
-    if (vertices.containsKey(v1) && vertices.containsKey(v2)) {
-      ArrayList<Edge<T>> edges = new ArrayList<>();
-      getPathByBreadthFirstSearch(v1, v2).stream().reduce((f, t) -> {
-        edges.add(new Edge<>(f, t));
-        return t;
-      });
-      return edges;
-    }
-    throw new IllegalArgumentException(
-        String.format("Path vertices (%s, %s) must be part of the graph", from, to));
+
+    validateVertices(v1, v2);
+
+    ArrayList<Edge<T>> edges = new ArrayList<>();
+    getPathByBreadthFirstSearch(v1, v2).stream().reduce((f, t) -> {
+      edges.add(new Edge<>(f, t));
+      return t;
+    });
+    return edges;
   }
 
   private List<Vertex<T>> getPathByBreadthFirstSearch(Vertex<T> from, Vertex<T> to) {
 
-    if (from.equals(to) || vertices.get(from).contains(to)) {
+    if (vertices.get(from).contains(to)) {
       return Arrays.asList(from, to);
     }
 
@@ -117,6 +113,13 @@ public class Graph<T> {
       }
     }
     return Collections.emptyList();
+  }
+
+  @SafeVarargs
+  private final void validateVertices(Vertex<T>... toValidate) {
+    if (!vertices.keySet().containsAll(Arrays.asList(toValidate))) {
+      throw new IllegalArgumentException("Vertices must be part of the graph");
+    }
   }
 
   public Boolean getDirected() {
